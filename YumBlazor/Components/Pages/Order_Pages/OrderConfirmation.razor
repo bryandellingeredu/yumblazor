@@ -1,0 +1,43 @@
+﻿@page "/order/confirmation/{session_id}"
+@using YumBlazor.Services
+@using YumBlazor.Utility
+@inject PaymentService paymentService 
+@inject IRepository<Models.ShoppingCart> cartRepository    
+
+@if (IsProcessing)
+{
+    <div class="position-absolute w-100 vh-100 d-flex flex-column align-items-center bg-white justify-content-center">
+        <img src="/lib/images/loading.gif" alt="loading" />
+    </div>
+}
+else
+{
+    <div class="text-center">
+        <h1 class="pt-4 text-success">Order Confirmation</h1>
+        <p class="lead">Your order is confirmed. Please note your order ID for any questions</p>
+        <p>Order ID: @orderHeader.Id</p>
+        <p>Thank you for shopping with us!</p>  
+        <hr />
+        <img src="/lib/images/lawn_leaf.jpg" width="40%" />
+        <hr />
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string session_id { get; set; } = string.Empty;  
+    private OrderHeader orderHeader { get; set; } = new OrderHeader();  
+
+    public bool IsProcessing { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        orderHeader = await paymentService.CheckPaymentStatusAndUpdateOrder(session_id); 
+        if (orderHeader.Status==SD.StatusApproved)
+        {
+            var cartsToClear = (await cartRepository.GetAllAsync()).Where(x => x.UserId == orderHeader.UserId);  
+            await cartRepository.DeleteRangeAsync(cartsToClear);
+        }
+        IsProcessing = false;
+    }
+}

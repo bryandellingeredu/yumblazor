@@ -1,0 +1,243 @@
+﻿@page "/cart"
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@using System.Globalization
+@using YumBlazor.Services
+@using YumBlazor.Utility
+@inject IRepository<Models.ShoppingCart> _cartRepository
+@inject IRepository<Models.OrderHeader> _orderRepository    
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager 
+@inject YumBlazor.Services.SharedStateService sharedStateService;
+@inject PaymentService paymentService;  
+@attribute [Authorize]
+
+<PageTitle>Cart</PageTitle>
+@if (IsProcessing) {
+<div class="position-absolute w-100 vh-100 d-flex flex-column align-items-center bg-white justify-content-center">
+  <img src="/lib/images/loading.gif" alt="loading" />
+</div>
+}
+else
+{
+if(shoppingCarts.Any()){
+<div class="row w-100">
+  <div class="col-lg-6 col-12">
+    <div class="container p-4 m-2">
+      <h4 class="text-center text-success display-6">
+        Cart Summary
+      </h4>
+      @foreach (Models.ShoppingCart cartItem in shoppingCarts) {
+      <div class="d-flex p-2 m-2">
+        <div class="card flex-row w-100">
+          <img class="card-img-left" style="width: 120px;" src="@(cartItem.Product.ImageUrl ?? "/lib/images/default.png ")" />
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <h4>
+                @cartItem.Product.Name
+              </h4>
+              <h4>
+                @cartItem.Product.Price.ToString("C", CultureInfo.GetCultureInfo("en-us"))
+              </h4>
+            </div>
+            <div class="flex-fill">
+              <h4 class="text-danger">
+                @( cartItem?.Product != null ? (cartItem.Count * cartItem.Product.Price).ToString("C",CultureInfo.GetCultureInfo("en-us")) : ".00" )
+              </h4>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex justify-content-between g-0">
+                @if (cartItem.Count > 1) {
+                <span @onclick="() => UpdateCartItem(cartItem.ProductId, -1)">
+                  <i class="bi bi-dash-circle-fill btn text-secondary">
+                  </i>
+                </span>
+                }
+                <span class="ml-1 me-1">
+                  <b class="lead">
+                    @cartItem.Count
+                  </b>
+                </span>
+                <span @onclick="()=>UpdateCartItem(cartItem.ProductId, 1)">
+                  <i class="bi bi-plus-circle-fill btn text-secondary">
+                  </i>
+                </span>
+              </div>
+              <button class="btn btn-danger" @onclick="()=>remove(cartItem.ProductId)">
+                Remove
+              </button>
+            </div>
+          </div>
+          <!-- .card-body -->
+        </div>
+        <!-- .card -->
+      </div>
+      <!-- .d-flex -->
+      }
+    </div>
+  </div>
+  <div class="col-lg-6 col-12 p-4">
+    <div class="card">
+      <div class="card-header text-success text-center display-6">
+        Pickup Details
+      </div>
+      <EditForm Model="OrderHeader" FormName="CartForm" OnValidSubmit="ProcessOrderCreation">
+        <div class="card-body">
+          <DataAnnotationsValidator />
+          <div class="card-body">
+            <div class="form-group">
+              <label>
+                Name
+              </label>
+              <InputText class="form-control" @bind-Value="OrderHeader.Name" />
+              <ValidationMessage For="@(() => OrderHeader.Name)" />
+            </div>
+            <div class="form-group">
+              <label>
+                Email
+              </label>
+              <InputText class="form-control" @bind-Value="OrderHeader.Email" />
+              <ValidationMessage For="@(() => OrderHeader.Email)" />
+            </div>
+            <div class="form-group">
+              <label>
+                Phone
+              </label>
+              <InputText class="form-control" @bind-Value="OrderHeader.PhoneNumber"
+              />
+              <ValidationMessage For="@(() => OrderHeader.PhoneNumber)" />
+            </div>
+          </div>
+          <div class="card mt-4 bg-light">
+            <div class="card-body">
+                                <h4>
+                                    Grand Total: @(shoppingCarts
+                                    .Sum(c => c.Count * c.Product.Price)
+                                    .ToString("C", CultureInfo.GetCultureInfo("en-us")))
+                                </h4>
+              <h4>
+                   No. of Items: @shoppingCarts.Sum(c => c.Count)
+              </h4>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-success m-4" type="submit">
+          Looks Good? Place Order!
+        </button>
+      </EditForm>
+    </div>
+  </div>
+        </div>
+    }
+    else
+    {
+        <div class="p-4">
+            <div class="alert alert-warning">
+                Your cart is empty! Please add items to cart
+            </div>
+        </div>
+    }
+}
+ @code
+{
+    public bool IsProcessing { get; set; } = true;
+    private List<Models.ShoppingCart> shoppingCarts { get; set; } = new();
+    private string _userId { get; set; } = string.Empty;
+
+    [SupplyParameterFromForm]
+    public OrderHeader OrderHeader { get; set; }
+    = new OrderHeader();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState
+               = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        OrderHeader.Email = user.FindFirst(u => u.Type.Contains("email"))?.Value;
+        OrderHeader.UserId =  user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        OrderHeader.Status = SD.StatusPending;  
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var authState
+                = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            _userId = userId;
+
+            shoppingCarts
+                = (await _cartRepository.GetAllIncludingAsync("Product", "User"))
+                      .Where(x => x.UserId == userId)
+                      .ToList();
+            IsProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task UpdateCartItem(Guid productId, int updateBy)
+    {
+        var existingCartItem = shoppingCarts.First(
+            x => x.UserId == _userId && x.ProductId == productId);
+
+        existingCartItem.Count += updateBy;
+
+        if (existingCartItem.Count < 1)
+        {
+            existingCartItem.Count = 1;
+        }
+
+        await _cartRepository.UpdateAsync(existingCartItem);
+
+        sharedStateService.TotalCartCount = (await _cartRepository.GetAllAsync()).Where(x => x.UserId == _userId).Sum(x => x.Count);
+
+
+        StateHasChanged(); // This tells Blazor to re-render the UI
+    }
+
+    private async Task remove(Guid productId)
+    {
+
+        var existingCartItem = shoppingCarts.FirstOrDefault(
+            x => x.UserId == _userId && x.ProductId == productId);
+
+        if (existingCartItem is not null)
+        {
+            await _cartRepository.DeleteAsync(existingCartItem.Id);
+            shoppingCarts.Remove(existingCartItem);
+            sharedStateService.TotalCartCount = (await _cartRepository.GetAllAsync()).Where(x => x.UserId == _userId).Sum(x => x.Count);
+            StateHasChanged();
+        }
+    }
+
+    private async Task ProcessOrderCreation()
+    {
+        IsProcessing = true;
+        await Task.Yield();
+        OrderHeader.OrderDetails = SD.ConvertShoppingCartListToOrderDetail(shoppingCarts);
+
+        var session =  paymentService.CreateStripeCheckoutSession(OrderHeader);
+        Models.OrderHeader orderHeader = new();
+        orderHeader.Id = Guid.NewGuid();
+        orderHeader.OrderDate = DateTime.Now;
+        orderHeader.UserId = _userId;
+        orderHeader.Email = OrderHeader.Email;
+        orderHeader.Name = OrderHeader.Name; 
+        orderHeader.PhoneNumber = OrderHeader.PhoneNumber;
+        orderHeader.Status = SD.StatusPending;
+        orderHeader.OrderDetails = OrderHeader.OrderDetails;
+        orderHeader.OrderTotal = (double)shoppingCarts.Sum(c => c.Count * c.Product.Price);
+        orderHeader.SessionId = session.Id;  
+
+        await _orderRepository.AddAsync(orderHeader);
+        await _cartRepository.DeleteRangeAsync(shoppingCarts);
+        sharedStateService.TotalCartCount = (await _cartRepository.GetAllAsync()).Where(x => x.UserId == _userId).Sum(x => x.Count);
+        NavigationManager.NavigateTo(session.Url);  
+    }
+
+
+   }
+
+

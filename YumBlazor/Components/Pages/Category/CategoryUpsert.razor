@@ -1,0 +1,101 @@
+﻿@page "/category/create"
+@page "/category/update/{id:guid}"
+@inject IRepository<Category> Repository
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JsRuntime
+
+@if (IsProcessing)
+{
+    <div class="position-absolute w-75 h-75 d-flex flex-column align-items-center bg-white justify-content-center">
+        <img src="/lib/images/loading.gif" alt="loading" />
+    </div>
+}
+else
+{
+    <div class="card shadow border-0 mt-4">
+        <div class="card-header bg-black bg-gradient ms-lg-0 py-2">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h2 class="text-white py-2">@(Id != null ? "Update" : "Create")Category List</h2>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-4">
+           <EditForm Model="Category" FormName="CategoryUpsertForm" OnValidSubmit="UpsertCategory">
+               <DataAnnotationsValidator/>
+
+               <div class="border p-3 mt-4">
+                    <div class="form-floating py-3 col-12">
+                        <InputText @bind-Value="Category.Name" class="form-control" id="Name" placeholder="Name" />
+                        <label for="Name">Name</label>
+                        <ValidationMessage For="@(() => Category.Name)" />
+                    </div>
+                    <div class="row mt-3">
+                        <div class="d-flex justify-content-end mt-4">
+                            <div class="btn-group" role="group">
+                                <a href="category" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-bar-left me-2"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary" disabled="@IsProcessing">
+                                    <i class="bi bi-save"></i> Save
+                                </button>
+                              
+                            </div>
+                        </div>
+                    </div>
+                  
+               </div>
+           </EditForm>
+
+
+          
+        </div>
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public Guid? Id { get; set; } = null;
+
+    private bool IsProcessing { get; set; } = false;
+
+    [SupplyParameterFromForm]
+    private Category Category { get; set; } = new Category();
+
+    private async Task UpsertCategory()
+    {
+        IsProcessing = true;
+        if (Id.HasValue)
+        {
+            await Repository.UpdateAsync(Category);
+            await JsRuntime.ToastrSuccess("Category Updated Successfully");       
+
+        }
+        else
+        {
+            await Repository.AddAsync(Category);
+            await JsRuntime.ToastrSuccess("Category Created Successfully");
+        }
+        IsProcessing = false;
+        NavigationManager.NavigateTo("category");
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id.HasValue)
+        {
+            IsProcessing = true;
+
+            // Fetch the category by Id here. Example:
+            var category = await Repository.GetByIdAsync(Id.Value);
+            if (category != null)
+            {
+                Category = category;
+            }
+
+            IsProcessing = false;
+        }
+    }
+
+}

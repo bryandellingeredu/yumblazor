@@ -1,0 +1,222 @@
+﻿@page "/"
+@using System.Globalization
+@using System.Security.Claims
+@inject IRepository<Models.Product> _productRepository
+@inject IRepository<Models.Category> _categoryRepository
+@inject IRepository<Models.ShoppingCart> _cartRepository
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JS
+@inject NavigationManager NavigationManager
+@inject YumBlazor.Services.SharedStateService sharedStateService;
+
+
+<PageTitle>Home</PageTitle>
+@if (IsProcessing)
+{
+    <div class="position-absolute w-100 vh-100 d-flex flex-column align-items-center bg-white justify-content-center">
+        <img src="/lib/images/loading.gif" alt="loading" />
+    </div>
+}
+else
+{
+    <div class="container-fluid px-0 m-0 full-width">
+        <div class="jumbotron-custom">
+            <div class="m-auto d-flex align-items-center" style="width: 400px; height: 50vh;">
+
+                <div class="d-flex align-items-center" style="width: 100%;">
+                    <input type="text" class="form-control rounded-pill" @bind-value="@searchString" @bind-value:event="oninput"
+                    placeholder="Search for Food Items!"
+                    style="width: 100%; padding: 20px;">
+                    <span style="position: relative; left: -43px;"><i class="bi bi-search"></i></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="content px-4 m-2">
+            <ul class="nav nav-underline justify-content-center mb-2">
+                <li class="nav-item">
+                    <span class="nav-link @( _selectedCategoryId == Guid.Empty ? "active" : "" )"
+                    style="cursor: pointer" @onclick="() => HandleCategoryChange(Guid.Empty)">All</span>
+                </li>
+                @foreach (var category in categories)
+                {
+                    <li class="nav-item">
+                        <span class="nav-link @( _selectedCategoryId == category.Id ? "active" : "" )"
+                        style="cursor: pointer" @onclick="() => HandleCategoryChange(category.Id)">
+                            @category.Name
+                        </span>
+                    </li>
+                }
+            </ul>
+            <div class="row mt-4 mx-1">
+                @foreach (var product in filteredProducts)
+                {
+
+                    <div class="col-12 col-md-6 col-lg-4 pe-3 mb-5">
+                        <div class="card">
+                        <div class="mt-3 mb-2 row">
+                            <div class="col-6 px-3">
+
+                                    @if (!string.IsNullOrEmpty(product.SpecialTag))
+                                    {
+                                        <i class="bi bi-star btn btn-outline-success disabled"> @product.SpecialTag</i>
+                                    }
+
+                              
+                            </div>
+                            <div class="col-6 text-end text-danger px-3 h3">
+                                    @product.Price.ToString("C", CultureInfo.GetCultureInfo("en-us"))
+                            </div>
+                        </div>
+                        <div class="text-center">
+                                @if (!string.IsNullOrEmpty(product.ImageUrl))
+                                {
+                                    <img class="card-img-top img-thumbnail img-rounded w-50 mt-2" src="@product.ImageUrl" style="">
+                                }
+                                else
+                                {
+                                    <img class="card-img-top img-thumbnail img-rounded w-50 mt-2" src="/lib/images/default.png" style="">
+                                }
+                              
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title text-center lead text-success">@product.Name</h5>
+                            <p class="card-text mt-2">@((MarkupString)@product.Description)</p>
+                            <h4 class="text-center">
+                                <div class="m-lg-auto p-2" @onclick="()=>AddOrderItem(product)">
+                                        <i class="bi bi-cart3 btn btn-success text-right  px-5 form-control" > Add to cart</i>
+                                </div>
+                            </h4>
+                         </div>
+                    </div>
+                </div>
+                }
+
+
+            </div>
+        </div>
+    </div>
+}
+
+@code{
+    private string _searchString = string.Empty;
+
+    private string searchString
+    {
+        get => _searchString;
+        set
+        {
+            _searchString = value;
+            DebounceFilter();
+        }
+    }
+
+    private System.Timers.Timer? _debounceTimer;
+    private const int DebounceDelay = 300; // milliseconds
+
+    IEnumerable<Models.Product> products { get; set; } = new List<Models.Product>(); 
+    IEnumerable<Models.Product> filteredProducts { get; set; } = new List<Models.Product>();
+    IEnumerable<Models.Category> categories { get; set; } = new List<Models.Category>();
+    IEnumerable<Models.ShoppingCart> shoppingCarts { get; set; } = new List<Models.ShoppingCart>();
+    private Guid _selectedCategoryId = Guid.Empty;
+
+    public bool IsProcessing { get; set; } = true;
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(firstRender)
+        {
+            products = (await _productRepository.GetAllAsync()).ToList();
+            filteredProducts = products;
+            categories = (await _categoryRepository.GetAllAsync()).ToList();
+            shoppingCarts = (await _cartRepository.GetAllIncludingAsync("Product", "User")).ToList();
+            IsProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private void DebounceFilter()
+    {
+        _debounceTimer?.Stop();
+        _debounceTimer?.Dispose();
+
+        _debounceTimer = new System.Timers.Timer(DebounceDelay);
+        _debounceTimer.Elapsed += (_, _) =>
+        {
+            _debounceTimer?.Stop();
+            _debounceTimer?.Dispose();
+            _debounceTimer = null;
+
+            // Filter on the UI thread
+            InvokeAsync(() => FilterProducts());
+        };
+        _debounceTimer.AutoReset = false;
+        _debounceTimer.Start();
+    }
+
+    private void HandleCategoryChange(Guid categoryId)
+    {
+        _selectedCategoryId = categoryId;
+        FilterProducts();
+    }
+
+    private void FilterProducts()
+    {
+        filteredProducts = products
+            .Where(p =>
+                (_selectedCategoryId == Guid.Empty || p.CategoryId == _selectedCategoryId) &&
+                (string.IsNullOrWhiteSpace(searchString) ||
+                 (!string.IsNullOrEmpty(p.Name) &&
+                  p.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)))
+            )
+            .ToList();
+
+        StateHasChanged();
+    }
+
+    private async Task AddOrderItem(Models.Product product)
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var authenticated = user.Identity is not null && user.Identity.IsAuthenticated;
+
+        if (!authenticated)
+        {
+            NavigationManager.NavigateTo("/Account/Login", forceLoad: true);
+            return;
+        }
+
+        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            return; // Unexpected: no user ID found
+        }
+
+        // Find if the user already has this product in the cart
+        var existingCartItem = shoppingCarts
+            .FirstOrDefault(x => x.UserId == userId && x.ProductId == product.Id);
+
+        if (existingCartItem is not null)
+        {
+            existingCartItem.Count++;
+            await _cartRepository.UpdateAsync(existingCartItem);
+        }
+        else
+        {
+            var newCartItem = new ShoppingCart
+            {
+                UserId = userId,
+                ProductId = product.Id,
+                Count = 1
+            };
+            await _cartRepository.AddAsync(newCartItem);
+        }
+        sharedStateService.TotalCartCount = (await _cartRepository.GetAllAsync()).Where(x => x.UserId == userId).Sum(x => x.Count);
+        JS?.ToastrSuccess("Product added to cart succesfully");
+    }
+  
+
+
+
+}
