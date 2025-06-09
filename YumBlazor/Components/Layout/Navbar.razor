@@ -1,74 +1,111 @@
-﻿@using YumBlazor.Services;
+﻿@using YumBlazor.Components.Pages
+@using YumBlazor.Services;
 @inject AuthenticationStateProvider authenticationStateProvider;
 @inject YumBlazor.Services.SharedStateService sharedStateService;
 @inject IRepository<ShoppingCart> shoppingCartRepository;	
+@inject NavigationManager NavigationManager;	
 
-<nav class="navbar navbar-expand-md navbar-dark bg-dark pb-4 pt-4">
-	<div class="container-fluid">
-		<a class="navbar-brand" href="">
-			<img src="/lib/images/Logo.png"  width="30" height="24">
-			YumBlazor
-		</a>
-		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
-				aria-controls="navbarCollapse" aria-label="Toggle navigation">
-			<span class="navbar-toggler-icon"></span>
-		</button>
-		<div class="collapse navbar-collapse" id="navbarCollapse">
-			<ul class="navbar-nav me-auto mb-2 mb-md-0">
-				<li class="nav-item mx-2">
-					<NavLink class="nav-link" href="">
-						<span class="bi bi-house-door" aria-hidden="true"></span> Home
-					</NavLink>
-				</li>
-				<li class="nav-item mx-2">
-					<NavLink class="nav-link" href="/cart">
-						<span class="bi bi-cart3" aria-hidden="true"></span> Cart
-                        (@sharedStateService.TotalCartCount)
-					</NavLink>
-				</li>
-				<li class="nav-item mx-2">
-					<NavLink class="nav-link" href="/order/list">
-						<span class="bi bi-card-list" aria-hidden="true"></span> Order List
-					</NavLink>
-				</li>
-			</ul>
-			<ul class="d-flex navbar-nav mb-2 mb-md-0">
-				<AuthorizeView>
-					<Authorized>
-						<li class="nav-item">
-							<NavLink class="nav-link p-2" href="Account/Manage">
+<MudPaper Class="mud-elevation-6 px-4" Square Style="@_navbarStyle">
+	<MudAppBar Elevation="4" Style="@_navbarStyle">
+    <MudGrid AlignItems="Center" Class="w-100">
+        <MudItem Grow="false">
+				<div class="d-flex align-items-center cursor-pointer" @onclick="NavigateHome" >
+					<MudImage Src="/lib/images/Logo.png" Alt="Logo" Width="30" Height="30" Class="mt-2" />
+					<MudText Style="@GetStyle()" Typo="Typo.h6" Class="ml-2 mt-2">YumBlazor</MudText>
+            </div>
+        </MudItem>
+
+			<MudItem Grow="false" Class="mt-1">
+				<MudNavLink Style="@GetStyle()" Href="/" Match="NavLinkMatch.All">
+					<MudIcon Icon="@Icons.Material.Filled.Home" Class="mr-1" Style="@GetStyle()" />
+					Home
+				</MudNavLink>
+			</MudItem>
+
+			<MudItem Grow="false" Class="mt-1">
+				<MudNavLink Style="@GetStyle()" Href="/cart" Match="NavLinkMatch.All">
+					<MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Class="mr-1" Style="@GetStyle()" />
+					Cart
+					(@sharedStateService.TotalCartCount)
+				</MudNavLink>
+			</MudItem>
+
+
+			<MudItem Grow="false" Class="mt-1">
+				<MudNavLink Style="@GetStyle()" Href="/order/list" Match="NavLinkMatch.All">
+					<MudIcon Icon="@Icons.Material.Filled.List" Class="mr-1" Style="@GetStyle()" />
+					Order List
+				</MudNavLink>
+			</MudItem>
+
+			<MudItem Grow="false" Class="ml-auto">
+				<div class="d-flex align-items-center">
+					<AuthorizeView>
+						<Authorized>
+							<MudNavLink Style="@GetStyle()" Href="Account/Manage" Match="NavLinkMatch.All" Class="mr-2">
+								<MudIcon Icon="@Icons.Material.Filled.Person" Style="@GetStyle()" Class="mr-1" />
 								Welcome, @context?.User?.Identity?.Name
-							</NavLink>
-						</li>
-						<li class="nav-item">
-							<form action="Account/Logout" method="post">
+							</MudNavLink>
+
+							<form action="Account/Logout" method="post" class="m-0">
 								<AntiforgeryToken />
 								<input type="hidden" name="ReturnUrl" value="" />
-								<button type="submit" class="nav-link btn btn-success">
-									<span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
+								<button type="submit" class="mud-nav-link d-flex align-items-center ml-2" style="background:none;border:none;padding:0;margin:0;cursor:pointer;@GetStyle()">
+									<MudIcon Icon="@Icons.Material.Filled.Logout" Class="mr-1" Style="@GetStyle()" />
+									Logout
 								</button>
 							</form>
-						</li>
-					</Authorized>
-		            <NotAuthorized>
-						<li class="nav-item">
-							<NavLink class="nav-link" href="Account/Register">
-								<span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
-							</NavLink>
-						</li>
-						<li class="nav-item">
-							<NavLink class="nav-link btn btn-success" href="Account/Login">
-								<span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
-							</NavLink>
-						</li>
-					</NotAuthorized>
-				</AuthorizeView>
-			</ul>
-		</div>
-	</div>
-</nav>
+						</Authorized>
+
+						<NotAuthorized>
+							<MudNavLink Style="@GetStyle()" Href="Account/Register" Match="NavLinkMatch.All" Class="mr-2">
+								<div class="d-flex align-items-center">
+									<MudIcon Icon="@Icons.Material.Filled.PersonAdd" Style="@GetStyle()" Class="mr-1" />
+									Register
+								</div>
+							</MudNavLink>
+
+							<MudNavLink Style="@GetStyle()" Href="Account/Login" Match="NavLinkMatch.All" Class="mr-2">
+								<div class="d-flex align-items-center">
+									<MudIcon Icon="@Icons.Material.Filled.Login" Style="@GetStyle()" Class="mr-1" />
+									Login
+								</div>
+							</MudNavLink>
+						</NotAuthorized>
+					</AuthorizeView>
+
+					<MudIconButton Icon="@GetDarkModeIcon()"
+								   OnClick="ToggleDarkModeFromNavbar"
+								   Style="@GetStyle()" />
+				</div>
+			</MudItem>
+    </MudGrid>
+</MudAppBar>
+</MudPaper>
+
+
 
 @code{
+
+	[Parameter]
+	public EventCallback OnToggleDarkMode { get; set; }
+
+	[Parameter]
+	public bool _isDarkMode { get; set; }
+
+
+	[CascadingParameter]
+	public MudThemeProvider? ThemeProvider { get; set; }
+
+	private string _backgroundColor => _isDarkMode ? "#2a103d" : "#f5e9ff";
+	private string _textColor => _isDarkMode ? "#ffffff" : "#000000";
+	private string _navbarStyle => $"background-color: {_backgroundColor}; color: {_textColor};";
+
+	private string GetStyle()
+	{
+		return $"color: {(_isDarkMode ? "#ffffff" : "#000000")}";
+	}
+
 	protected override async Task OnInitializedAsync()
 	{
 		sharedStateService.OnChange += OnSharedStateChange;
@@ -76,10 +113,21 @@
 
 	}
 
+	private async Task ToggleDarkModeFromNavbar()
+	{
+		await OnToggleDarkMode.InvokeAsync();
+	}
+
+	private string GetDarkModeIcon()
+	{
+		return _isDarkMode ? Icons.Material.Filled.DarkMode : Icons.Material.Filled.LightMode;
+	}
+
 	private void OnSharedStateChange()
 	{
 		InvokeAsync(StateHasChanged);
 	}	
+
 
 	public async Task GetInitialCount(){
 			var user = (await authenticationStateProvider.GetAuthenticationStateAsync()).User;
@@ -106,4 +154,16 @@
 	{
 		sharedStateService.OnChange -= OnSharedStateChange;
 	}	
+
+	private void ToggleDarkMode()
+	{
+		_isDarkMode = !_isDarkMode;
+		StateHasChanged();
+	}
+
+
+	private void NavigateHome()
+	{
+		NavigationManager.NavigateTo("/");
+	}
 }

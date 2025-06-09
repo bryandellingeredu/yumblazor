@@ -2,6 +2,28 @@
 
 @inject NavigationManager NavigationManager
 
+<MudNavMenu>
+    <!--- <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink> -->
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+    <MudNavLink Href="category" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Category">Categories</MudNavLink>
+    <MudNavLink Href="product" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Coffee">Products</MudNavLink>
+    <MudNavLink Href="/order/list" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.List">Order List</MudNavLink>
+     <AuthorizeView>
+        <MudNavLink Href="Account/Manage" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Person">@context.User.Identity?.Name</MudNavLink>
+        <div style="padding: 0.5rem 1rem;">
+            <form action="Account/Logout" method="post" style="margin: 0;">
+                <AntiforgeryToken />
+                <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                <button type="submit" style="all: unset; cursor: pointer; display: flex; align-items: center;">
+                    <MudIcon Icon="@Icons.Material.Filled.Logout" Class="mud-nav-link-icon mud-icon-size-medium" />
+                    <span style="margin-left: 8px;">Logout</span>
+                </button>
+            </form>
+        </div>
+     </AuthorizeView>
+</MudNavMenu>
+
+@*
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">YumBlazor</a>
@@ -70,6 +92,7 @@
         </AuthorizeView>
     </nav>
 </div>
+*@
 
 @code {
     private string? currentUrl;

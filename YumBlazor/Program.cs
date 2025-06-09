@@ -9,6 +9,7 @@ using YumBlazor.Data;
 using YumBlazor.Models;
 using YumBlazor.Repository;
 using YumBlazor.Services;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +63,7 @@ builder.Services.AddRadzenComponents();
 builder.Services.AddSingleton<SharedStateService>();
 builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<NavBarService>();
+builder.Services.AddMudServices();
 
 var app = builder.Build();
 StripeConfiguration.ApiKey = builder.Configuration.GetSection("StripeApiKey").Value;
