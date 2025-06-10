@@ -15,7 +15,6 @@
 {
     <MudPaper Class="d-flex flex-column align-items-center justify-center" Style="height: 100vh; width: 100%;">
         <MudProgressCircular Indeterminate="true" Color="Color.Primary" Diameter="100"/>
-        <img src="/lib/images/loading.gif" alt="loading" />
     </MudPaper>
 }
 else
@@ -64,7 +63,7 @@ else
             {
                  <MudItem xs="12" sm="6" md="4" lg="4">
                     <MudCard Class="mb-5">
-                        <MudCardMedia Image="@(!string.IsNullOrEmpty(product.ImageUrl) ? product.ImageUrl : "/lib/images/default.png")" Height="200" />
+                        <MudCardMedia Image="@(!string.IsNullOrEmpty(product.ImageUrl) ? product.ImageUrl : "/lib/images/default.png")" Height="400" />
 
                         <MudCardContent>
                             <MudText Typo="Typo.h5" Align="Align.Center" Color="Color.Success">

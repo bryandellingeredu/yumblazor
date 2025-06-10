@@ -1,0 +1,26 @@
+﻿@using MudBlazor
+@inherits ComponentBase
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h6">@Title</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Cancel()" Color="Color.Default">Cancel</MudButton>
+        <MudButton OnClick="() => Confirm()" Color="Color.Error">@ButtonText</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public MudBlazor.IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public string Title { get; set; } = "Please Confirm";
+
+    [Parameter]
+    public string ButtonText { get; set; } = "Confirm";
+
+    private void Confirm() => MudDialog.Close(DialogResult.Ok(true));
+    private void Cancel() => MudDialog.Cancel();
+}

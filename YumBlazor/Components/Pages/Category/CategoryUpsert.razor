@@ -2,55 +2,53 @@
 @page "/category/update/{id:guid}"
 @inject IRepository<Category> Repository
 @inject NavigationManager NavigationManager
-@inject IJSRuntime JsRuntime
+@inject ISnackbar Snackbar
 
 @if (IsProcessing)
 {
-    <div class="position-absolute w-75 h-75 d-flex flex-column align-items-center bg-white justify-content-center">
-        <img src="/lib/images/loading.gif" alt="loading" />
-    </div>
+    <MudPaper Class="d-flex flex-column align-items-center justify-center" Style="height: 100vh; width: 100%;">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Diameter="100" />
+    </MudPaper>
 }
 else
 {
-    <div class="card shadow border-0 mt-4">
-        <div class="card-header bg-black bg-gradient ms-lg-0 py-2">
-            <div class="row">
-                <div class="col-12 text-center">
-                    <h2 class="text-white py-2">@(Id != null ? "Update" : "Create")Category List</h2>
-                </div>
-            </div>
-        </div>
-        <div class="card-body p-4">
-           <EditForm Model="Category" FormName="CategoryUpsertForm" OnValidSubmit="UpsertCategory">
-               <DataAnnotationsValidator/>
+    <MudContainer MaxWidth="MaxWidth.False" Class="d-flex justify-center mt-6">
+        <MudPaper Class="p-6" Style="width: 80%; max-width: 1000px;">
+            <MudForm @ref="_form" Class="p-4">
+                <!-- Add padding here -->
+                <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-4">
+                    @(Id != null ? "Update Category" : "Create Category")
+                </MudText>
 
-               <div class="border p-3 mt-4">
-                    <div class="form-floating py-3 col-12">
-                        <InputText @bind-Value="Category.Name" class="form-control" id="Name" placeholder="Name" />
-                        <label for="Name">Name</label>
-                        <ValidationMessage For="@(() => Category.Name)" />
-                    </div>
-                    <div class="row mt-3">
-                        <div class="d-flex justify-content-end mt-4">
-                            <div class="btn-group" role="group">
-                                <a href="category" class="btn btn-secondary">
-                                    <i class="bi bi-arrow-bar-left me-2"></i> Cancel
-                                </a>
-                                <button type="submit" class="btn btn-primary" disabled="@IsProcessing">
-                                    <i class="bi bi-save"></i> Save
-                                </button>
-                              
-                            </div>
-                        </div>
-                    </div>
-                  
-               </div>
-           </EditForm>
+                <MudTextField Label="Name"
+                              For="@(() => Category.Name)"
+                              @bind-Value="Category.Name"
+                              Required="true"
+                              Immediate="true"
+                              Variant="MudBlazor.Variant.Outlined"
+                              FullWidth="true"
+                              Class="mb-4" /> <!-- Just margin here -->
 
+                <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                    <MudButton Color="Color.Secondary"
+                               Variant="MudBlazor.Variant.Text"
+                               Href="/category"
+                               StartIcon="@Icons.Material.Filled.ArrowBack">
+                        Cancel
+                    </MudButton>
 
-          
-        </div>
-    </div>
+                    <MudButton Color="Color.Primary"
+                               Variant="MudBlazor.Variant.Filled"
+                               Disabled="IsProcessing"
+                               OnClick="HandleSubmit"
+                               StartIcon="@Icons.Material.Filled.Save">
+                        Save
+                    </MudButton>
+                </MudStack>
+            </MudForm>
+        </MudPaper>
+    </MudContainer>
+
 }
 
 
@@ -63,19 +61,34 @@ else
     [SupplyParameterFromForm]
     private Category Category { get; set; } = new Category();
 
+    private MudForm? _form;
+
+    private async Task HandleSubmit()
+    {
+        if (_form is not null)
+        {
+            await _form.Validate();
+
+            if (_form.IsValid)
+            {
+                await UpsertCategory();
+            }
+        }
+    }
+
     private async Task UpsertCategory()
     {
         IsProcessing = true;
         if (Id.HasValue)
         {
             await Repository.UpdateAsync(Category);
-            await JsRuntime.ToastrSuccess("Category Updated Successfully");       
+            Snackbar.Add("Category Updated Successfully", Severity.Success);
 
         }
         else
         {
             await Repository.AddAsync(Category);
-            await JsRuntime.ToastrSuccess("Category Created Successfully");
+            Snackbar.Add("Category Created Successfully", Severity.Success);
         }
         IsProcessing = false;
         NavigationManager.NavigateTo("category");

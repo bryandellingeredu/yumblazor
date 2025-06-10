@@ -1,65 +1,91 @@
 ﻿@inject IRepository<Category> Repository
 @inject IJSRuntime JSRuntime
 @page "/category"
+@inject IDialogService DialogService
 
-<BSModal OnModalConfirmation="ConfirmDelete_Click" ButtonBootstrapStyle="btn-danger" ButtonText="Delete" Title="Are You Sure?" />
+
 @if (IsProcessing)
 {
-    <div class="position-absolute w-75 h-75 d-flex flex-column align-items-center bg-white justify-content-center">
-        <img src="/lib/images/loading.gif" alt="loading" />
-    </div>
+    <MudPaper Class="d-flex flex-column align-items-center justify-center" Style="height: 100vh; width: 100%;">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Diameter="100" />
+    </MudPaper>
 }
 else
 {
-   <div class="card shadow border-0 mt-4">
-       <div class="card-header bg-black bg-gradient ms-lg-0 py-2">
-           <div class="row">
-               <div class="col-12 text-center">
-                   <h2 class="text-white py-2">Category List</h2>
-               </div>
-           </div>
-       </div>
-       <div class="card-body p-4">
-           <div class="row pb-3">
-               <div class="col-12 text-end">
-                    <a href="category/create" class="btn btn-large btn-secondary" style="width:200px;">
-                        <i class="bi bi-plus-square"></i>
-                        Add
-                   </a>
-               </div>
-           </div>
-            @if (_categories.Any())
-            {
-                <table class="table table-striped table-bordered table-hover">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var cat in _categories)
-                        {
-                            <tr>
-                                <td>@cat.Name</td>
-                                <td class="text-end">
-                                    <a href="@($"category/update/{cat.Id}")" class="btn btn-secondary" style="width:100px;">
-                                        <i class="bi bi-pencil-square"></i>
-                                        Edit
-                             
-                                     </a>
-                                    <button class="btn btn-danger" style="width:100px;" @onclick="() => HandleDelete(cat.Id)">
-                                        <i class="bi bi-trash3"></i>
-                                        Delete
-                                    </button>
-                                </td>   
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            }
-        </div>
-   </div> 
+    <MudPaper Class="shadow mt-4">
+        <MudPaper Class="bg-black py-2 px-3">
+            <MudText Typo="Typo.h5" Align="Align.Center" Class="text-white">
+                Category List
+            </MudText>
+        </MudPaper>
+
+
+        <MudPaper Class="p-4" Style="width: 100%;">
+            <MudStack Row="true" Justify="Justify.FlexEnd" Class="pb-3">
+                <MudButton Variant="MudBlazor.Variant.Filled"
+                           Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.Add"
+                           Href="category/create"
+                           Style="width:200px;">
+                    Add
+                </MudButton>
+            </MudStack>
+
+            <MudTextField @bind-Value="searchString"
+                          Placeholder="Search by name"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Margin="Margin.Dense"
+                          Class="mb-3" />
+
+            <MudTable Items="_categories"
+                      Filter="FilterFunc"
+                      RowsPerPage="10"
+                      Hover="true"
+                      Bordered="true"
+                      Striped="true"
+                      Dense="true"
+                      SortLabel="Sort By">
+
+                <HeaderContent>
+                    <MudTh>
+                        <MudTableSortLabel SortBy="new Func<Category, object>(x => x.Name)">
+                            Name
+                        </MudTableSortLabel>
+                    </MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+
+                <RowTemplate>
+                    <MudTd DataLabel="Name">@context.Name</MudTd>
+                    <MudTd Align="Right">
+                         <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                            <MudButton Variant="MudBlazor.Variant.Filled"
+                                       Color="Color.Secondary"
+                                       StartIcon="@Icons.Material.Filled.Edit"
+                                       Href="@($"category/update/{context.Id}")"
+                                       Style="width: 100px;">
+                                Edit
+                            </MudButton>
+                            <MudButton Variant="MudBlazor.Variant.Filled"
+                                       Color="Color.Error"
+                                       StartIcon="@Icons.Material.Filled.Delete"
+                                       OnClick="@(() => HandleDelete(context.Id))"
+                                       Style="width: 100px;">
+                                Delete
+                            </MudButton>
+                        </MudStack>
+                    </MudTd>
+                </RowTemplate>
+
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+            </MudTable>
+
+        </MudPaper>
+    </MudPaper>
+
 }
 
 @code {
@@ -67,33 +93,47 @@ else
     private List<Category> _categories = new();
     private Guid? DeleteCategoryId { get; set; } = null;
 
+    private string searchString = string.Empty;
+
+    private bool FilterFunc(Category category)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+
+        return category.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase);
+    }
 
     protected override async Task OnInitializedAsync()
     {
 
         IsProcessing = true;
         _categories = (await Repository.GetAllAsync()).ToList();
+        IsProcessing = false;
     }
 
-    private void HandleDelete(Guid id)
-    {
-        DeleteCategoryId = id;
-        JSRuntime.InvokeVoidAsync("ShowConfirmationModal");
-    }   
 
-    private async Task ConfirmDelete_Click(bool isConfirmed)
+
+    private async Task HandleDelete(Guid id)
     {
-        IsProcessing = true;
-        await JSRuntime.InvokeVoidAsync("HideConfirmationModal");
-        if (isConfirmed && DeleteCategoryId != null)
+    var parameters = new DialogParameters
         {
-            await Repository.DeleteAsync(DeleteCategoryId.Value);
+            ["Title"] = "Are you sure you want to delete this category?",
+            ["ButtonText"] = "Delete"
+        };
+
+    var options = new MudBlazor.DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+
+        var dialog = DialogService.Show<MBDialog>("Confirm Delete", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            IsProcessing = true;
+            await Repository.DeleteAsync(id);
             await JSRuntime.ToastrSuccess("Category Deleted");
             _categories = (await Repository.GetAllAsync()).ToList();
-
+            IsProcessing = false;
         }
-        DeleteCategoryId = null;
-        IsProcessing = false;
     }
  
 }

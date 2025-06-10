@@ -8,13 +8,78 @@
 
 @if (IsProcessing)
 {
-    <div class="position-absolute w-75 h-75 d-flex flex-column align-items-center bg-white justify-content-center">
-        <img src="/lib/images/loading.gif" alt="loading" />
-    </div>
+    <MudPaper Class="d-flex flex-column align-items-center justify-center" Style="height: 100vh; width: 100%;">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Diameter="100" />
+    </MudPaper>
 }
 else
 {
-    <div class="card shadow border-0 m-4">
+    <MudContainer MaxWidth="MaxWidth.False" Class="d-flex justify-center mt-6">
+          <MudPaper Class="p-6" Style="width: 80%; max-width: 1000px;">
+               <MudForm @ref="_form" Class="p-4">
+                <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-4">
+                    @(Id != null ? "Update Product" : "Create Product")
+                </MudText>
+
+                <MudTextField Label="Name"
+                              For="@(() => Product.Name)"
+                              @bind-Value="Product.Name"
+                              Required="true"
+                              Immediate="true"
+                              Variant="MudBlazor.Variant.Outlined"
+                              FullWidth="true"
+                              Class="mb-4" />
+
+                <MudTextField Label="Description"
+                              @bind-Value="Product.Description"
+                              Lines="5"
+                              FullWidth="true"
+                              Class="mb-4"
+                              Required="true" />
+
+                <MudTextField Label="Price"
+                              @bind-Value="Product.Price"
+                              Required="true"
+                              InputType="InputType.Number"
+                              FullWidth="true"
+                              Class="mb-4" />
+
+                <MudTextField Label="Special Tag"
+                              @bind-Value="Product.SpecialTag"
+                              FullWidth="true"
+                              Class="mb-4" />
+
+                <MudSelect T="Guid" Label="Category" @bind-Value="Product.CategoryId" Required="true" FullWidth="true" Class="mb-4">
+                    <MudSelectItem T="Guid" Value="@Guid.Empty" Disabled="true">--Select Category--</MudSelectItem>
+                    @foreach (var category in _categories)
+                    {
+                        <MudSelectItem T="Guid" Value="@category.Id">@category.Name</MudSelectItem>
+                    }
+                </MudSelect>
+
+                @if (Product.ImageUrl == null)
+                {
+                    <InputFile OnChange="LoadFiles" accept="image/x-png,image/jpeg" />
+                }
+                else
+                {
+                    <MudPaper Class="pa-2 mt-2 d-flex align-center">
+                        <MudImage Src="@Product.ImageUrl" Alt="Product Image" Style="max-width: 200px; max-height: 200px;" />
+                        <MudButton Variant="MudBlazor.Variant.Outlined" Color="Color.Error" OnClick="DeleteImage" Class="ms-4">Remove</MudButton>
+                    </MudPaper>
+                }
+
+                <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-6">
+                    <MudButton Href="/product" Color="Color.Secondary" Variant="MudBlazor.Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack">Cancel</MudButton>
+                    <MudButton Color="Color.Primary" Variant="MudBlazor.Variant.Filled" Disabled="IsProcessing" OnClick="HandleSubmit" StartIcon="@Icons.Material.Filled.Save">Save</MudButton>
+                </MudStack>
+
+               </MudForm>
+
+          </MudPaper>
+    </MudContainer>
+
+   @* <div class="card shadow border-0 m-4">
         <div class="card-header bg-black bg-gradient ms-lg-0 py-2">
             <div class="row">
                 <div class="col-12 text-center">
@@ -107,6 +172,7 @@ else
           
         </div>
     </div>
+    *@
 }
 
 
@@ -121,6 +187,21 @@ else
     private Product Product { get; set; } = new Product();
 
     private IEnumerable<Category> _categories { get; set; } = new List<Category>();
+
+    private MudForm? _form;
+
+    private async Task HandleSubmit()
+    {
+        if (_form is not null)
+        {
+            await _form.Validate();
+
+            if (_form.IsValid)
+            {
+                await UpsertProduct();
+            }
+        }
+    }
 
     private async Task UpsertProduct()
     {
