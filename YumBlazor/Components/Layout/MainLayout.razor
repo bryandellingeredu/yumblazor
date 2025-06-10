@@ -33,7 +33,9 @@
     </AuthorizeView>
 
     <MudMainContent >
-        @Body
+        <CascadingValue Value="_isDarkMode">
+            @Body
+        </CascadingValue>
     </MudMainContent>
     
 </MudLayout>
