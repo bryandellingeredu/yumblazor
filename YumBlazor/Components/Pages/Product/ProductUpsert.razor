@@ -3,7 +3,6 @@
 @inject IRepository<Product> Repository
 @inject IRepository<Category> CategoryRepository
 @inject NavigationManager NavigationManager
-@inject IJSRuntime JsRuntime
 @inject IWebHostEnvironment WebHostEnvironment  
 
 @if (IsProcessing)
@@ -71,13 +70,45 @@ else
 
                 @if (Product.ImageUrl == null)
                 {
-                    <InputFile OnChange="LoadFiles" accept="image/x-png,image/jpeg" />
+                    @if (showUploader)
+                    {
+                        @if (showUploader)
+                        {
+                            <MudStack Style="width: 100%">
+                                <MudFileUpload T="IBrowserFile"
+                                               OnFilesChanged="OnInputFileChanged"
+                                               Hidden="false"
+                                               InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10"
+                                               InputStyle="opacity:0"
+                                               tabindex="-1"
+                                               @ondrop="@ClearDragClass"
+                                               @ondragenter="@SetDragClass"
+                                               @ondragleave="@ClearDragClass"
+                                               @ondragend="@ClearDragClass">
+                                    <ActivatorContent>
+                                        <MudPaper Height="300px" Outlined="true" Class="@_dragClass">
+                                            <MudText Typo="Typo.h6">Drag and drop a file here or click to upload</MudText>
+                                        </MudPaper>
+                                    </ActivatorContent>
+                                </MudFileUpload>
+                                <MudButton Color="Color.Secondary" OnClick="() => showUploader = false">Cancel Image Upload</MudButton>
+                            </MudStack>
+                        }
+                    }
+                    else
+                    {
+                        <MudButton OnClick="() => showUploader = true" Variant="MudBlazor.Variant.Outlined" Color="Color.Primary">
+                            Upload Image
+                        </MudButton>
+                    }
                 }
                 else
                 {
                     <MudPaper Class="pa-2 mt-2 d-flex align-center">
                         <MudImage Src="@Product.ImageUrl" Alt="Product Image" Style="max-width: 200px; max-height: 200px;" />
-                        <MudButton Variant="MudBlazor.Variant.Outlined" Color="Color.Error" OnClick="DeleteImage" Class="ms-4">Remove</MudButton>
+                        <MudButton Variant="MudBlazor.Variant.Outlined" Color="Color.Error" OnClick="DeleteImage" Class="ms-4">
+                            Remove
+                        </MudButton>
                     </MudPaper>
                 }
 
@@ -108,9 +139,24 @@ else
 
     private MudForm? _form;
 
+    private bool showUploader = false;
+
+    private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mt-4 mud-width-full mud-height-full";
+    private string _dragClass = DefaultDragClass;
+
+    private void SetDragClass() => _dragClass = $"{DefaultDragClass} mud-border-primary";
+    private void ClearDragClass() => _dragClass = DefaultDragClass;
+
+    private async Task OnInputFileChanged(InputFileChangeEventArgs e)
+    {
+        ClearDragClass();
+        await LoadFiles(e); // your existing logic to process image
+        showUploader = false;
+    }
+
     [CascadingParameter]
     private bool _isDarkMode { get; set; }
-
+   
     private async Task HandleSubmit()
     {
         if (_form is not null)
@@ -131,12 +177,12 @@ else
         if (Id.HasValue)
         {
             await Repository.UpdateAsync(Product);
-            await JsRuntime.ToastrSuccess("Product Updated Successfully");
+           // await JsRuntime.ToastrSuccess("Product Updated Successfully");
         }
         else
         {
             await Repository.AddAsync(Product);
-            await JsRuntime.ToastrSuccess("Product Created Successfully");
+            //await JsRuntime.ToastrSuccess("Product Created Successfully");
         }
         IsProcessing = false;
         NavigationManager.NavigateTo("product");
