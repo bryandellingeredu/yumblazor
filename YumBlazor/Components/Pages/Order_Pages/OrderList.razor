@@ -9,48 +9,104 @@
 
 @if (IsProcessing)
 {
-    <div class="position-absolute w-100 h-100 d-flex flex-column align-items-center bg-white justify-content-center">
-        <img src="/lib/images/loading.gif" alt="loading" />
-    </div>
+    <MudPaper Class="d-flex flex-column align-items-center justify-center" Style="height: 100vh; width: 100%;">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Diameter="100" />
+    </MudPaper>
 }
 else
 {
-    <div class="card shadow border-0 m-4">
-        <div class="card-header bg-black bg-gradient ms-lg-0 py-2">
-            <div class="row">
-                <div class="col-12 text-center">
-                    <h2 class="text-white py-2">Order List</h2>
-                </div>
-            </div>
-        </div>
-        <div class="card-body p-4">
 
-            @if (orders.Any()){
+     <MudPaper Class="shadow mt-4">
+        <MudPaper Class="bg-black py-2 px-3">
+            <MudText Typo="Typo.h5" Align="Align.Center" Class="text-white">
+                Order List
+            </MudText>
+        </MudPaper>
+     </MudPaper>
 
+      <MudPaper Class="p-4" Style="width: 100%;">
 
-            <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="5" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
-    Data="@orders" ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.Or" SelectionMode="DataGridSelectionMode.Single" >
-    <Columns>
-        <RadzenDataGridColumn Property="Id" Filterable="true" Title="ID" Frozen="true" Width="80px"  />
+        <MudTextField @bind-Value="searchString"
+                      Immediate="true"
+                      Placeholder="Search by name"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Margin="Margin.Dense"
+                      Class="mb-3" />
 
-                        <RadzenDataGridColumn Property="Name" Title="Name"  Width="120px" />
-                        <RadzenDataGridColumn Property="PhoneNumber" Title="Phone"  Width="120px" />
-                        <RadzenDataGridColumn Property="Email" Title="Email" Width="120px" />
-                        <RadzenDataGridColumn Property="OrderTotal" Title="Order Total" FormatString="{0:C}" Width="120px" />
-                        <RadzenDataGridColumn Property="OrderDate" Title="Order Date" FormatString="{0:d}"  Width="120px" />
-                        <RadzenDataGridColumn Property="Status" Title="Order Status"  Width="120px" />
-                        <RadzenDataGridColumn Title="Action" Sortable="false" Filterable="false" Width="80px" TextAlign="TextAlign.Center">
-                            <Template Context="order">
-                                <RadzenButton Shade="Shade.Lighter" Text="Details" ButtonStyle="ButtonStyle.Primary"
-                                Click="@(() => NavigationManager.NavigateTo($"order/details/{order.Id}"))" /> 
-                            </Template>
-                        </RadzenDataGridColumn>
+        <MudTable Items="orders"
+                      Filter="FilterFunc"
+                      RowsPerPage="10"
+                      Hover="true"
+                      Bordered="true"
+                      Striped="true"
+                      Dense="true"
+                      SortLabel="Sort By">
+                <HeaderContent>
+                <MudTh>
+                    <MudTableSortLabel SortBy="new Func<OrderHeader, object>(x => x.Id)">
+                        Id
+                    </MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortBy="new Func<OrderHeader, object>(x => x.Name)">
+                        Name
+                    </MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortBy="new Func<OrderHeader, object>(x => x.PhoneNumber)">
+                        Phone
+                    </MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortBy="new Func<OrderHeader, object>(x => x.Email)">
+                        Email
+                    </MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortBy="new Func<OrderHeader, object>(x => x.OrderTotal)">
+                        Order Total
+                    </MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortBy="new Func<OrderHeader, object>(x => x.OrderDate)">
+                        Order Date
+                    </MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortBy="new Func<OrderHeader, object>(x => x.Status)">
+                        Order Status
+                    </MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                </MudTh>
+            </HeaderContent>
+              <RowTemplate>
+                    <MudTd DataLabel="Id">@context.Id</MudTd>
+                <MudTd DataLabel="Name">@context.Name</MudTd>
+                <MudTd DataLabel="Phone">@context.PhoneNumber</MudTd>
+                <MudTd DataLabel="Email">@context.Email</MudTd>
+                <MudTd DataLabel="Order Total">@context.OrderTotal.ToString("C", CultureInfo.CurrentCulture)</MudTd>
+                <MudTd DataLabel="Order Date">@context.OrderDate.ToString("d", CultureInfo.CurrentCulture)</MudTd>
+                <MudTd DataLabel="Order Status">@context.Status</MudTd>
+                <MudTd Align="Right">
+                    <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                        <MudButton Variant="MudBlazor.Variant.Filled"
+                                   Color="Color.Secondary"
+                                   StartIcon="@Icons.Material.Filled.Details"
+                                   OnClick="@(() => NavigationManager.NavigateTo($"order/details/{context.Id}"))">
+                            Details
+                        </MudButton>
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+         </MudTable>
 
-    </Columns>
-</RadzenDataGrid>
-            }
-        </div>
-    </div>
+      </MudPaper>
+
 }
 
 @code {
@@ -89,5 +145,15 @@ else
            IsAdmin = user.IsInRole(SD.Role_Admin);
            UserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;   
         }
+    }
+
+    private string searchString = string.Empty;
+
+    private bool FilterFunc(OrderHeader order)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+
+        return order.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase);
     }
 }

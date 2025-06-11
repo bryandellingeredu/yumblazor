@@ -5,79 +5,70 @@
 
 @if (IsProcessing)
 {
-    <div class="position-absolute w-100 h-100 d-flex flex-column align-items-center bg-white justify-content-center">
-        <img src="/lib/images/loading.gif" alt="loading" />
-    </div>
+    <MudPaper Class="d-flex flex-column align-items-center justify-center" Style="height: 100vh; width: 100%;">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Diameter="100" />
+    </MudPaper>
 }
 else
 {
-    <div class="container my-5 mx-auto p-5 w-100" style="max-width: 950px;">
-        <div class="card" style="max-width: 750px;">
-            <div class="pt-3 text-success text-center">
-                <span class="h4"> ORDER DETAILS</span>
-            </div>
-
-            <hr />
-            <div class="px-3">
-                <p>Order Id: @orderHeader.Id</p>
-                <p>Name: @orderHeader.Name</p>
-                <p>Email: @orderHeader.Email</p>
-                <p>Phone: @orderHeader.PhoneNumber</p>
-                <p>Order Status: @orderHeader.Status </p>
-            </div>
-            <hr />
-            <div class="card-body">
-                <h4 class="text-success">Menu Items</h4>
-
-                @foreach (var order in orderHeader.OrderDetails)
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="my-6">
+        <MudPaper Class="p-6">
+            <MudText Typo="Typo.h5" Color="Color.Success" Align="Align.Center" Class="mb-4">
+                ORDER DETAILS
+            </MudText>
+            <MudDivider Class="mb-3" />
+            <MudStack Spacing="2" Class="mb-3">
+                <MudText>Order Id: @orderHeader.Id</MudText>
+                <MudText>Name: @orderHeader.Name</MudText>
+                <MudText>Email: @orderHeader.Email</MudText>
+                <MudText>Phone: @orderHeader.PhoneNumber</MudText>
+                <MudText>Order Status: @orderHeader.Status</MudText>
+            </MudStack>
+            <MudDivider Class="mb-3" />
+            <MudText Typo="Typo.h6" Color="Color.Success" Class="mb-3">
+                Menu Items
+            </MudText>
+            @foreach (var order in orderHeader.OrderDetails)
+            {
+                <MudPaper Class="p-2 mb-2" Elevation="1">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween">
+                        <MudText> @order.ProductName </MudText>
+                        <MudText> @order.Price.ToString("C", CultureInfo.GetCultureInfo("en-us")) X @order.Count </MudText>
+                    </MudStack>
+                    <MudText Class="ps-4">
+                        @((order.Price * order.Count).ToString("C", CultureInfo.GetCultureInfo("en-us")))
+                    </MudText>
+                </MudPaper>
+            }
+            <MudDivider Class="my-3" />
+            <MudStack Row="true" Justify="Justify.SpaceBetween">
+                <MudButton Variant="MudBlazor.Variant.Filled" Color="Color.Secondary" Href="/order/list" Style="width:150px;">
+                    Back
+                </MudButton>
+                @if (orderHeader.Status != SD.StatusCancelled && orderHeader.Status != SD.StatusCompleted && IsAdmin)
                 {
+                    <MudStack Row="true" Spacing="2">
+                        <MudButton Variant="MudBlazor.Variant.Filled" Color="Color.Error" OnClick="() => UpdateStatus(SD.StatusCancelled)" Style="width:150px;">
+                            Cancel Order
+                        </MudButton>
 
-
-                    <div class="d-flex">
-                        <div class="d-flex w-100 justify-content-between">
-                        <p>
-                            &nbsp; -- @order.ProductName
-                        </p>
-                        <p>
-                           @order.Price.ToString("C", CultureInfo.GetCultureInfo("en-us")) X @order.Count
-                        </p>
-                    </div>
-                    <div class="ps-4">
-                            @((order.Price * order.Count).ToString("C", CultureInfo.GetCultureInfo("en-us")))
-                    </div>
-
-                </div>
-
-                }
-                <hr />
-                <h4 class="text-success text-end">
-                    @orderHeader.OrderTotal.ToString("C", CultureInfo.GetCultureInfo("en-us"))
-                </h4>
-                <hr />
-
-                <div class="row">
-                    <div class="col-5">
-                        <a href="order/list" class="btn btn-secondary  m-2 p-2" style="width:150px;">Back to Orders</a>
-                    </div>
-                    <div class="col-7 text-end">
-                        @if (orderHeader.Status != SD.StatusCancelled && orderHeader.Status != SD.StatusCompleted && IsAdmin)
+                        @if (orderHeader.Status == SD.StatusApproved)
                         {
-                            <button class="btn btn-danger m-2 p-2" style="width:150px;" @onclick="()=>UpdateStatus(SD.StatusCancelled)">Cancel Order</button>
-
-                            @if(orderHeader.Status == SD.StatusApproved)
-                            {
-                                <button class="btn btn-primary m-2 p-2" style="width:150px;" @onclick="() => UpdateStatus(SD.StatusReadyForPickup)">Ready for Pickup</button>
-                            }
-                            @if (orderHeader.Status == SD.StatusReadyForPickup)
-                            {
-                                <button class="btn btn-success m-2 p-2" style="width:150px;" @onclick="() => UpdateStatus(SD.StatusCompleted)">Completed</button>
-                            }
+                            <MudButton Variant="MudBlazor.Variant.Filled" " Color="Color.Primary" OnClick="() => UpdateStatus(SD.StatusReadyForPickup)" Style="width:150px;">
+                               Pickup
+                            </MudButton>
                         }
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+                        @if (orderHeader.Status == SD.StatusReadyForPickup)
+                        {
+                            <MudButton Variant="MudBlazor.Variant.Filled" Color="Color.Success" OnClick="() => UpdateStatus(SD.StatusCompleted)" Style="width:150px;">
+                                Completed
+                            </MudButton>
+                        }
+                    </MudStack>
+                }
+             </MudStack>
+        </MudPaper>
+    </MudContainer>
 }
 
 

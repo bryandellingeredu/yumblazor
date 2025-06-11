@@ -35,6 +35,7 @@ else
 
 
             <MudTextField @bind-Value="searchString"
+                          Immediate="true"
                           Placeholder="Search by name"
                           Adornment="Adornment.Start"
                           AdornmentIcon="@Icons.Material.Filled.Search"
@@ -102,6 +103,9 @@ else
                         </MudStack>
                     </MudTd>
                   </RowTemplate>
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
                   
                   </MudTable>
 

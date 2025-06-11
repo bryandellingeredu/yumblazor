@@ -6,21 +6,37 @@
 
 @if (IsProcessing)
 {
-    <div class="position-absolute w-100 vh-100 d-flex flex-column align-items-center bg-white justify-content-center">
-        <img src="/lib/images/loading.gif" alt="loading" />
-    </div>
+    <MudPaper Class="d-flex flex-column align-items-center justify-center" Style="height: 100vh; width: 100%;">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Diameter="100" />
+    </MudPaper>
 }
 else
 {
-    <div class="text-center">
-        <h1 class="pt-4 text-success">Order Confirmation</h1>
-        <p class="lead">Your order is confirmed. Please note your order ID for any questions</p>
-        <p>Order ID: @orderHeader.Id</p>
-        <p>Thank you for shopping with us!</p>  
-        <hr />
-        <img src="/lib/images/lawn_leaf.jpg" width="40%" />
-        <hr />
-    </div>
+    <MudContainer MaxWidth="MaxWidth.False" Class="d-flex justify-center mt-6">
+        <MudPaper Class="p-6" Style="width: 80%; max-width: 800px;">
+            <MudText Typo="Typo.h4" Color="Color.Success" Align="Align.Center" Class="mb-4">Order Confirmation</MudText>
+
+            <MudText Typo="Typo.body1" Align="Align.Center" Class="mb-2">
+                Your order is confirmed. Please note your order ID for any questions.
+            </MudText>
+
+            <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-2">
+                Order ID: @orderHeader.Id
+            </MudText>
+
+            <MudText Typo="Typo.body1" Align="Align.Center" Class="mb-4">
+                Thank you for shopping with us!
+            </MudText>
+
+            <MudDivider Class="mb-4" />
+
+            <MudPaper Class="d-flex justify-center">
+                <MudImage Src="/lib/images/lawn_leaf.jpg" Style="width: 40%;" />
+            </MudPaper>
+
+            <MudDivider Class="mt-4" />
+        </MudPaper>
+    </MudContainer>
 }
 
 @code {
