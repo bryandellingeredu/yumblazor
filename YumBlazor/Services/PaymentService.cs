@@ -25,7 +25,6 @@ namespace YumBlazor.Services
 
         public Session CreateStripeCheckoutSession(OrderHeader orderHeader)
         {
-           // var stripeApiKey = _configuration["StripeApiKey"];
 
             var lineItems = orderHeader.OrderDetails
                    .Select(od => new SessionLineItemOptions
