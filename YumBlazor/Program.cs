@@ -42,8 +42,6 @@ builder.Services.AddAuthentication(options =>
     .AddIdentityCookies();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-//builder.Services.AddDbContext<ApplicationDbContext>(options =>
-//options.UseSqlServer(connectionString), ServiceLifetime.Transient);
 
 builder.Services.AddDbContextFactory<ApplicationDbContext>(
     options => options.UseSqlServer(connectionString));
@@ -71,7 +69,7 @@ StripeConfiguration.ApiKey = builder.Configuration.GetSection("StripeApiKey").Va
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
+    await db.Database.MigrateAsync();
     await DatabaseSeeder.SeedAsync(scope.ServiceProvider);
 }
 
@@ -99,4 +97,4 @@ app.MapRazorComponents<App>()
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
 
-app.Run();
+await app.RunAsync();

@@ -12,21 +12,20 @@ namespace YumBlazor.Services
     {
         private readonly NavigationManager _navigationManager;
         private readonly IRepository<OrderHeader> _orderRepository;
-        private readonly IConfiguration _configuration;
+ 
 
         public PaymentService(
             NavigationManager navigationManager,
-            IRepository<OrderHeader> orderRepository,
-            IConfiguration configuration    )
+            IRepository<OrderHeader> orderRepository
+              )
         {
             _navigationManager = navigationManager;
             _orderRepository = orderRepository;
-            _configuration = configuration;
         }
 
         public Session CreateStripeCheckoutSession(OrderHeader orderHeader)
         {
-            var stripeApiKey = _configuration["StripeApiKey"];
+           // var stripeApiKey = _configuration["StripeApiKey"];
 
             var lineItems = orderHeader.OrderDetails
                    .Select(od => new SessionLineItemOptions
@@ -62,7 +61,7 @@ namespace YumBlazor.Services
             if (orderHeader != null)
             {
                 var service = new SessionService(); 
-                var session = service.Get(sessionId);
+                var session = await service.GetAsync(sessionId);
                 if (session.PaymentStatus.ToLower() == "paid")
                 {
                     orderHeader.Status = SD.StatusApproved;  
@@ -71,7 +70,7 @@ namespace YumBlazor.Services
                 }
                
             }
-            return orderHeader;
+            return orderHeader??new OrderHeader();
         }
     }
 }
