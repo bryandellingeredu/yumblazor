@@ -4,14 +4,14 @@ namespace YumBlazor.Utility
 {
     public static class SD
     {
-        public static string Role_Admin = "Admin";
-        public static string Role_Customer = "Customer";
+        public readonly static string Role_Admin = "Admin";
+        public readonly static string Role_Customer = "Customer";
 
-        public static string StatusPending = "Pending";
-        public static string StatusApproved = "Approved";
-        public static string StatusReadyForPickup = "ReadyForPickup";
-        public static string StatusCompleted = "Completed";
-        public static string StatusCancelled = "Cancelled";
+        public readonly static string StatusPending = "Pending";
+        public readonly static string StatusApproved = "Approved";
+        public readonly static string StatusReadyForPickup = "ReadyForPickup";
+        public readonly static string StatusCompleted = "Completed";
+        public readonly static string StatusCancelled = "Cancelled";
 
         public static List<OrderDetail> ConvertShoppingCartListToOrderDetail(List<ShoppingCart> shoppingCarts)
         {
