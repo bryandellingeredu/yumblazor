@@ -134,8 +134,12 @@ else
         {
             products = (await _productRepository.GetAllAsync()).ToList();
             filteredProducts = products;
-            categories = (await _categoryRepository.GetAllAsync()).ToList();
+            var allCategories = (await _categoryRepository.GetAllAsync()).ToList();
             shoppingCarts = (await _cartRepository.GetAllIncludingAsync("Product", "User")).ToList();
+            categories = allCategories
+            .Where(c => products.Any(p => p.CategoryId == c.Id))
+            .OrderBy(c => c.Name)
+            .ToList();
             IsProcessing = false;
             StateHasChanged();
         }

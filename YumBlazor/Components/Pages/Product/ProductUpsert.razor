@@ -60,13 +60,25 @@ else
                               FullWidth="true"
                               Class="mb-4" />
 
-                <MudSelect T="Guid" Label="Category" @bind-Value="Product.CategoryId" Required="true" FullWidth="true" Class="mb-4">
-                    <MudSelectItem T="Guid" Value="@Guid.Empty" Disabled="true">--Select Category--</MudSelectItem>
-                    @foreach (var category in _categories)
-                    {
-                        <MudSelectItem T="Guid" Value="@category.Id">@category.Name</MudSelectItem>
-                    }
-                </MudSelect>
+
+                <MudAutocomplete T="Category"
+                                 Value="@selectedCategory"
+                                 ValueChanged="OnSelectedCategoryChanged"
+                                 ToStringFunc="@(c => c?.Name ?? string.Empty)"
+                                 SearchFunc="SearchCategories"
+                                 CoerceValue="true"
+                                 CoerceText="true"
+                                 Clearable="true"
+                                 Label="Category"
+                                 Required="true"
+                                 FullWidth="true"
+                                 Class="mb-4"
+                                 MinCharacters="0"
+                                 MaxItems="1000"
+                                 AutoSelect="true" />
+
+              
+
 
                 @if (Product.ImageUrl == null)
                 {
@@ -147,10 +159,33 @@ else
     private void SetDragClass() => _dragClass = $"{DefaultDragClass} mud-border-primary";
     private void ClearDragClass() => _dragClass = DefaultDragClass;
 
+    /*begin dropdown auto complete code*/
+
+    private Category selectedCategory;
+
+    private Task<IEnumerable<Category>> SearchCategories(string value, CancellationToken token) =>
+      Task.FromResult(
+          string.IsNullOrWhiteSpace(value)
+              ? _categories.OrderBy(c => c.Name).AsEnumerable()
+              : _categories
+                  .Where(c => c.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase))
+                  .OrderBy(c => c.Name)
+                  .AsEnumerable()
+      );
+
+    private Task OnSelectedCategoryChanged(Category? category)
+    {
+        selectedCategory = category;
+        Product.CategoryId = category?.Id ?? Guid.Empty;
+        return Task.CompletedTask;
+    }
+
+    /*end dropdown auto complete code*/
+
     private async Task OnInputFileChanged(InputFileChangeEventArgs e)
     {
         ClearDragClass();
-        await LoadFiles(e); // your existing logic to process image
+        await LoadFiles(e); 
         showUploader = false;
     }
 
