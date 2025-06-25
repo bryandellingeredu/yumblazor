@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YumBlazor", "YumBlazor.cspr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YumBlazor.Tests", "..\YumBlazor.Tests\YumBlazor.Tests.csproj", "{893DBD95-5A20-4287-9662-B84980C6B1E7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YumBlazor.Tests.UI", "..\YumBlazor.Tests.UI\YumBlazor.Tests.UI.csproj", "{AB91D100-7EDF-468F-BD01-D1FE79F50965}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{893DBD95-5A20-4287-9662-B84980C6B1E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{893DBD95-5A20-4287-9662-B84980C6B1E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{893DBD95-5A20-4287-9662-B84980C6B1E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB91D100-7EDF-468F-BD01-D1FE79F50965}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB91D100-7EDF-468F-BD01-D1FE79F50965}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB91D100-7EDF-468F-BD01-D1FE79F50965}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB91D100-7EDF-468F-BD01-D1FE79F50965}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
