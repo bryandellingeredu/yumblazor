@@ -62,6 +62,7 @@ builder.Services.AddSingleton<SharedStateService>();
 builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<NavBarService>();
 builder.Services.AddMudServices();
+builder.Services.AddScoped<IGraphHelperService, GraphHelperService>();
 
 var app = builder.Build();
 StripeConfiguration.ApiKey = builder.Configuration.GetSection("StripeApiKey").Value;
