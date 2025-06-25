@@ -1,17 +1,87 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.Playwright;
+using NUnit.Framework;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Playwright;
-using NUnit.Framework;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace YumBlazor.Tests.UI
 {
+
+
     [TestFixture]
     public sealed class HomePageTests
     {
         private Process? _appProcess;
+        private IPlaywright? _playwright;
+        private IBrowser? _browser;
+        private IPage? _page;
+        private IPage Page => _page ?? throw new InvalidOperationException("Page is not initialized.");
 
         [SetUp]
+        public async Task Setup()
+        {
+            StartApp();
+
+            _playwright = await Playwright.CreateAsync();
+            _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+            {
+                Headless = false
+            });
+            _page = await _browser.NewPageAsync();
+
+            _page.Console += (_, msg) =>
+                Console.WriteLine($"[BrowserConsole] {msg.Type}: {msg.Text}");
+        }
+
+        [TearDown]
+        public async Task TearDown()
+        {
+            if (_page is not null)
+                await _page.CloseAsync();
+            if (_browser is not null)
+                await _browser.CloseAsync();
+            if (_playwright is not null)
+                _playwright.Dispose();
+
+            StopApp();
+        }
+
+
+
+       [Test]
+        public async Task HomePage_ShouldLoad()
+        {
+            await GotoHomePageAsync();
+
+            await _page!.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = $"HomePage_ShouldLoad_{DateTime.Now:yyyyMMdd_HHmmss}.png"
+            });
+            var title = await _page!.TitleAsync();
+            NUnit.Framework.TestContext.Progress.WriteLine($"Page title is: {title}");
+            NUnit.Framework.Assert.That(title, Is.EqualTo("Home"), "Page title should be 'Home'");
+        }
+
+        [Test]
+        public async Task Check_Test_Search()
+        {
+            await GotoHomePageAsync();
+
+            await Page.GetByLabel("Search for Food Items!").FillAsync("Jalebi");
+            await Page.WaitForTimeoutAsync(500);
+            var cards = await Page.Locator("div.mud-card").AllAsync();
+            NUnit.Framework.TestContext.Progress.WriteLine($"Found {cards.Count} product card(s).");
+            NUnit.Framework.Assert.That(cards.Count, Is.EqualTo(1), "Should show exactly 1 product card for 'Jalebi'");
+            await Page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = $"Check_Test_Search_{DateTime.Now:yyyyMMdd_HHmmss}.png"
+            });
+
+
+        }
+
+
         public void StartApp()
         {
             var solutionDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../"));
@@ -60,57 +130,30 @@ namespace YumBlazor.Tests.UI
             Thread.Sleep(1000);
         }
 
-        [TearDown]
         public void StopApp()
         {
-            if (_appProcess != null && !_appProcess.HasExited)
+            if (_appProcess is not null && !_appProcess.HasExited)
             {
+                Console.WriteLine($"[INFO] Stopping app (PID {_appProcess.Id})...");
                 _appProcess.Kill(entireProcessTree: true);
                 _appProcess.Dispose();
+                _appProcess = null;
+            }
+            else
+            {
+                Console.WriteLine("[INFO] App process was already stopped.");
             }
         }
 
-        [Test]
-        public async Task HomePage_ShouldLoad()
+        private async Task GotoHomePageAsync()
         {
-            using var playwright = await Playwright.CreateAsync();
+            if (_page is null)
+                throw new InvalidOperationException("Page is not initialized.");
 
-            var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+            await _page.GotoAsync("https://localhost:7132/", new PageGotoOptions
             {
-                Headless = false // run visible for now
+                WaitUntil = WaitUntilState.NetworkIdle
             });
-
-            var page = await browser.NewPageAsync();
-
-            // log browser console messages
-            page.Console += (_, msg) => Console.WriteLine($"[BrowserConsole] {msg.Type}: {msg.Text}");
-
-            try
-            {
-                await page.GotoAsync("https://localhost:7132/", new PageGotoOptions
-                {
-                    WaitUntil = WaitUntilState.NetworkIdle
-                });
-
-                await page.ScreenshotAsync(new PageScreenshotOptions
-                {
-                    Path = $"HomePage_ShouldLoad_{DateTime.Now:yyyyMMdd_HHmmss}.png"
-                });
-            }
-            catch (Exception ex)
-            {
-                await page.ScreenshotAsync(new PageScreenshotOptions
-                {
-                    Path = $"Error_{DateTime.Now:yyyyMMdd_HHmmss}.png"
-                });
-
-                Console.WriteLine($"[ERROR] Test failed: {ex.Message}");
-                throw;
-            }
-            finally
-            {
-                await browser.CloseAsync();
-            }
         }
     }
 }
