@@ -8,17 +8,16 @@ namespace YumBlazor.Services
     public class GraphHelperService : IGraphHelperService
     {
 
-        private readonly IConfiguration _config;
         private readonly GraphServiceClient _appClient;
         private readonly string serviceAccount;
 
         public GraphHelperService(IConfiguration config, IHostEnvironment hostEnvironment)
         {
-            _config = config;
-            var tenantId = _config["GraphHelper:tenantId"];
-            var clientId = _config["GraphHelper:clientId"];
-            var clientSecret = _config["GraphHelper:clientSecret"];
-            serviceAccount = _config["GraphHelper:serviceAccount"];
+
+            var tenantId = config["GraphHelper:tenantId"];
+            var clientId = config["GraphHelper:clientId"];
+            var clientSecret = config["GraphHelper:clientSecret"];
+            serviceAccount = config["GraphHelper:serviceAccount"];
             if (string.IsNullOrEmpty(tenantId) || string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
             {
                 throw new InvalidOperationException("Graph configuration is missing.");
@@ -67,20 +66,14 @@ namespace YumBlazor.Services
                 SaveToSentItems = false
             };
 
-            try
-            {
+          
                 await _appClient.Users[serviceAccount]
                     .SendMail
                     .PostAsync(mailbody);
-            }
-            catch (Exception ex)
-            {
-                // Rethrow so your page can catch and show Snackbar
-                throw;
-            }
+          
         }
 
-        private string[] LoadRecipientsFromSettings()
+        private static string[] LoadRecipientsFromSettings()
         {
             var settingsFile = Path.Combine(AppContext.BaseDirectory, "usersettings.json");
 
@@ -111,7 +104,7 @@ namespace YumBlazor.Services
             return recipients!;
         }
 
-        private bool IsValidEmail(string email)
+        private static bool IsValidEmail(string email)
         {
             try
             {

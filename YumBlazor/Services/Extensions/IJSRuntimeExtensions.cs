@@ -2,7 +2,7 @@
 
 namespace YumBlazor.Services.Extensions
 {
-    public static class IJSRuntimeExtensions
+    public static class IJsRuntimeExtensions
     {
         public static async Task ToastrSuccess(this IJSRuntime js, string message)
         {
