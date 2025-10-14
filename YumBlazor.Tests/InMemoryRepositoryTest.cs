@@ -20,6 +20,7 @@ namespace YumBlazor.Tests
             foreach (var category in _categories)
             {
                 _repo.AddAsync(category).Wait();
+
             }
         }  
         
