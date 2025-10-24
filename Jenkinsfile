@@ -1,41 +1,42 @@
 pipeline {
     agent any
 
+    stages {
+        stage('Diagnose') {
+            steps {
+                sh '''
+                echo "=== whoami / groups ==="
+                whoami
+                id
 
+                echo "=== dotnet info ==="
+                which dotnet
+                dotnet --info
 
-      stages {
-            stage('Diagnose') {
-                steps {
+                echo "=== repo contents ==="
+                ls -R
+                '''
+            }
+        }
+
+        stage('Build') {
+            steps {
+                dir('YumBlazor') {
                     sh '''
-                   echo "=== whoami / groups ==="
-                    whoami
-                    id
-
-                    echo "=== docker cli ==="
-                    which docker || echo "docker CLI not found"
-                    docker version || echo "cannot talk to docker daemon"
-
-                    echo "=== repo contents ==="
-                    ls -R
+                    dotnet restore
+                    dotnet build --configuration Release
+                    dotnet publish --configuration Release --output ./publish
                     '''
                 }
             }
-            stage('Build'){
-                agent{
-                    docker{
-                        image 'mcr.microsoft.com/dotnet/sdk:9.0'
-                        reuseNode true
-                    }
+        }
+
+        stage('Archive Published App') {
+            steps {
+                dir('YumBlazor') {
+                    archiveArtifacts artifacts: 'publish/**', fingerprint: true
                 }
-                 steps {
-                    sh '''
-                        cd Yumblazor
-                        dotnet --info
-                        dotnet restore
-                        dotnet build --configuration Release
-                        dotnet publish --configuration Release --output ./publish
-                        '''
-               }
             }
-      }
+        }
+    }
 }
