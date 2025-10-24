@@ -12,9 +12,6 @@ pipeline {
                 echo "=== dotnet info ==="
                 which dotnet
                 dotnet --info
-
-                echo "=== repo contents ==="
-                ls -R
                 '''
             }
         }
@@ -38,9 +35,6 @@ pipeline {
                     dotnet test --configuration Release \
                                 --logger "trx;LogFileName=test-results.trx" \
                                 /clp:ErrorsOnly
-
-                    echo "=== After test run, here's TestResults dir ==="
-                    ls -R
                     '''
                 }
             }
