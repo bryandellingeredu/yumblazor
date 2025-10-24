@@ -22,12 +22,17 @@ pipeline {
             }
         }
 
-        stage('Unit Tests') {
+       stage('Unit Tests') {
             steps {
-                dir('YumBlazor.Tests') {
-                    sh '''
-                    dotnet test --configuration Release --logger "trx;LogFileName=test-results.trx" /clp:ErrorsOnly
-                    '''
+                sh '''
+                dotnet test --configuration Release \
+                            --logger "junit;LogFileName=test-results.xml" \
+                            /clp:ErrorsOnly
+                '''
+            }
+            post {
+                always {
+                    junit 'YumBlazor.Tests/test-results.xml'
                 }
             }
         }
