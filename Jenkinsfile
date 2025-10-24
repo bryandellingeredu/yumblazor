@@ -24,7 +24,7 @@ pipeline {
                 dir('YumBlazor') {
                     sh '''
                     dotnet restore
-                    dotnet build --configuration Release
+                    dotnet build --configuration Release -warnaserror- -clp:ErrorsOnly
                     dotnet publish --configuration Release --output ./publish
                     '''
                 }
@@ -34,7 +34,7 @@ pipeline {
         stage('Archive Published App') {
             steps {
                 dir('YumBlazor') {
-                    archiveArtifacts artifacts: 'publish/**', fingerprint: true
+                    archiveArtifacts artifacts: 'publish/**',
                 }
             }
         }
