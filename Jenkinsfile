@@ -22,20 +22,22 @@ pipeline {
             }
         }
 
-      stage('Unit Tests') {
+ stage('Unit Tests') {
     steps {
         dir('YumBlazor.Tests') {
             sh '''
             dotnet test --configuration Release \
                         --logger "trx;LogFileName=test-results.trx" \
                         /clp:ErrorsOnly
+
+            echo "=== After test run, here's TestResults dir ==="
+            ls -R
             '''
         }
     }
     post {
         always {
-            // This step assumes you've installed the "MSTest" plugin in Jenkins.
-            junit 'YumBlazor.Tests/TestResults/test-results.trx'
+            junit 'YumBlazor.Tests/**/test-results.trx'
         }
     }
 }
