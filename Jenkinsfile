@@ -24,7 +24,7 @@ pipeline {
                 dir('YumBlazor') {
                     sh '''
                     dotnet restore
-                    dotnet build --configuration Release -warnaserror- -clp:ErrorsOnly
+                    dotnet build --configuration Release /clp:ErrorsOnly
                     dotnet publish --configuration Release --output ./publish
                     '''
                 }
