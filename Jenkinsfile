@@ -1,17 +1,21 @@
 pipeline {
     agent any
 
-      environment {
-        DOCKER_HOST = 'tcp://host.docker.internal:2375'
-        }
+
 
       stages {
             stage('Diagnose') {
                 steps {
                     sh '''
-                    echo "DOCKER_HOST=$DOCKER_HOST"
-                    which docker || true
-                    docker version
+                   echo "=== whoami / groups ==="
+                    whoami
+                    id
+
+                    echo "=== docker cli ==="
+                    which docker || echo "docker CLI not found"
+                    docker version || echo "cannot talk to docker daemon"
+
+                    echo "=== repo contents ==="
                     ls -R
                     '''
                 }
