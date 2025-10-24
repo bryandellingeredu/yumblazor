@@ -5,27 +5,38 @@ pipeline {
         stage('Diagnose') {
             steps {
                 sh '''
-                echo "=== whoami / groups ==="
                 whoami
                 id
-
-                echo "=== dotnet info ==="
                 which dotnet
                 dotnet --info
-
-                echo "=== repo contents ==="
-                ls -R
                 '''
             }
         }
 
-        stage('Build') {
+        stage('Restore') {
+            steps {
+                sh '''
+                dotnet restore YumBlazor/YumBlazor.csproj
+                dotnet restore YumBlazor.Tests/YumBlazor.Tests.csproj
+                '''
+            }
+        }
+
+        stage('Unit Tests') {
+            steps {
+                dir('YumBlazor.Tests') {
+                    sh '''
+                    dotnet test --configuration Release --logger "trx;LogFileName=test-results.trx" /clp:ErrorsOnly
+                    '''
+                }
+            }
+        }
+
+        stage('Publish') {
             steps {
                 dir('YumBlazor') {
                     sh '''
-                    dotnet restore
-                    dotnet build --configuration Release /clp:ErrorsOnly
-                    dotnet publish --configuration Release --output ./publish
+                    dotnet publish --configuration Release --output ./publish /clp:ErrorsOnly
                     '''
                 }
             }
