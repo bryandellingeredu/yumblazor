@@ -34,7 +34,7 @@ pipeline {
         stage('Archive Published App') {
             steps {
                 dir('YumBlazor') {
-                    archiveArtifacts artifacts: 'publish/**',
+                    archiveArtifacts artifacts: 'publish/**'
                 }
             }
         }
