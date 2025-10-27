@@ -45,5 +45,12 @@ pipeline {
         }
       }
     }
+    
+   stage('Archive Artifacts') {
+      steps {
+        // grab the published output from the workspace so Jenkins keeps it
+        archiveArtifacts artifacts: 'YumBlazor/publish/**', fingerprint: true
+      }
+    }
   }
 }
