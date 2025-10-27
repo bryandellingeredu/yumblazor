@@ -22,7 +22,6 @@ pipeline {
          echo "Node hostname: $(hostname)"
           dotnet --info
           pwd
-          ls -al
         '''
       }
     }
@@ -38,9 +37,6 @@ pipeline {
 
             echo "Publishing Release..."
             dotnet publish --configuration Release --output ./publish /clp:ErrorsOnly
-
-            echo "Publish folder contents:"
-            ls -al ./publish
           '''
         }
       }
