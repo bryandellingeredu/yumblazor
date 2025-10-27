@@ -15,6 +15,14 @@ pipeline {
     }
   }
 
+    environment {
+    // SonarCloud config for your existing hosted project
+    SONAR_HOST_URL   = 'https://sonarcloud.io'
+    SONAR_ORG        = 'bryandellingeredu'
+    SONAR_PROJECTKEY = 'yumblazor'
+  }
+
+
   stages {
     stage('Check env') {
       steps {
@@ -25,6 +33,35 @@ pipeline {
         '''
       }
     }
+
+        stage('Static Analysis - SonarCloud') {
+      steps {
+        dir('YumBlazor') {
+          withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
+            sh '''
+              echo "Installing SonarScanner for .NET (global tool)..."
+              dotnet tool install --global dotnet-sonarscanner || true
+              export PATH="$PATH:/root/.dotnet/tools"
+
+              echo "SonarCloud BEGIN"
+              dotnet sonarscanner begin \
+                /k:"${SONAR_PROJECTKEY}" \
+                /o:"${SONAR_ORG}" \
+                /d:sonar.host.url="${SONAR_HOST_URL}" \
+                /d:sonar.login="${SONAR_TOKEN}"
+
+              echo "Restore + Build under scanner context"
+              dotnet restore
+              dotnet build --configuration Release /clp:ErrorsOnly
+
+              echo "SonarCloud END (uploads analysis)"
+              dotnet sonarscanner end /d:sonar.login="${SONAR_TOKEN}"
+            '''
+          }
+        }
+      }
+    }
+
     stage('Build & Publish') {
       steps {
         dir('YumBlazor') {
