@@ -41,6 +41,25 @@ pipeline {
         }
       }
     }
+
+     stage('Unit Tests') {
+      steps {
+        dir('YumBlazor.Tests') {
+          sh '''
+            echo "Running unit tests..."
+            dotnet test --configuration Release \
+                        --logger "trx;LogFileName=test-results.trx" \
+                        /clp:ErrorsOnly
+          '''
+        }
+      }
+      post {
+        always {
+          // Archive the TRX results file so Jenkins keeps them even if tests fail
+          archiveArtifacts artifacts: 'YumBlazor.Tests/TestResults/test-results.trx', excludes: '**/*.pdb'
+        }
+      }
+    }
     
    stage('Archive Artifacts') {
       steps {
